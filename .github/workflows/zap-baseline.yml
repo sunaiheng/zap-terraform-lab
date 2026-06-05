@@ -1,9 +1,10 @@
-name: ZAP Scan
+name: ZAP Baseline Scan
 
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -11,37 +12,60 @@ permissions:
   id-token: write
 
 jobs:
-  zap:
+  zap_scan:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # -----------------------------
+      # ZAP Scan
+      # -----------------------------
       - name: Run ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: "https://sunaiheng.github.io/zap-terraform-lab/"
           fail_action: false
 
-      - name: Prepare Pages folder
+      # -----------------------------
+      # Debug: check generated files
+      # -----------------------------
+      - name: List files (debug)
         run: |
-          mkdir -p public/zap-report
+          echo "=== FIND HTML FILES ==="
+          find . -name "*.html" || true
 
-          # ZAP標準出力（ここが重要）
+      # -----------------------------
+      # Prepare Pages content
+      # -----------------------------
+      - name: Prepare ZAP report for Pages
+        run: |
+          mkdir -p docs/zap-report
+
+          # いろんなパターンを吸収
           if [ -f report.html ]; then
-            cp report.html public/zap-report/index.html
+            cp report.html docs/zap-report/index.html
+          elif [ -f ./report.html ]; then
+            cp ./report.html docs/zap-report/index.html
+          elif [ -f ./zap-baseline-report.html ]; then
+            cp ./zap-baseline-report.html docs/zap-report/index.html
+          elif [ -f ./baseline.html ]; then
+            cp ./baseline.html docs/zap-report/index.html
           else
-            echo "report not found" > public/zap-report/index.html
+            echo "<h1>ZAP report not found</h1><p>Check workflow logs</p>" > docs/zap-report/index.html
           fi
 
+      # -----------------------------
+      # Upload Pages artifact
+      # -----------------------------
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: docs
 
   deploy:
-    needs: zap
+    needs: zap_scan
     runs-on: ubuntu-latest
 
     environment:
