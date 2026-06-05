@@ -25,7 +25,7 @@ jobs:
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: "https://sunaiheng.github.io/zap-terraform-lab/"
-          report_html: zap-report.html
+
           fail_action: false
 
       # --- Prepare Pages content ---
