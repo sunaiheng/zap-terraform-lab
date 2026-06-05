@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ZAP Lab</title>
+</head>
+<body>
+  <h1>OWASP ZAP Test Site</h1>
+
+  <input id="input" type="text">
+  <button onclick="run()">Test</button>
+
+  <div id="result"></div>
+
+  <script>
+    function run() {
+      const value = document.getElementById("input").value;
+
+      // 故意に危険な実装
+      document.getElementById("result").innerHTML = value;
+    }
+  </script>
+
+</body>
+</html>
