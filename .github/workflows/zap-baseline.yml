@@ -10,31 +10,47 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  security-events: write
 
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --- ZAP Scan ---
+      # -----------------------------
+      # ZAP Baseline Scan
+      # -----------------------------
       - name: Run ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: "https://sunaiheng.github.io/zap-terraform-lab/"
-
           fail_action: false
 
-      # --- Prepare Pages content ---
-      - name: Prepare Pages folder
+      # -----------------------------
+      # Debug（生成物確認）
+      # -----------------------------
+      - name: List files
+        run: ls -la
+
+      # -----------------------------
+      # Prepare Pages content
+      # -----------------------------
+      - name: Prepare report for Pages
         run: |
           mkdir -p public/zap-report
-          cp zap-report.html public/zap-report/index.html
 
-      # --- Upload Pages artifact ---
+          # ZAPは基本 report.html をルートに出す
+          if [ -f report.html ]; then
+            cp report.html public/zap-report/index.html
+          else
+            echo "ZAP report not found!" > public/zap-report/index.html
+          fi
+
+      # -----------------------------
+      # Upload Pages artifact
+      # -----------------------------
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
