@@ -3,6 +3,11 @@ name: ZAP Scan
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+  security-events: write
+
 jobs:
   zap:
     runs-on: ubuntu-latest
