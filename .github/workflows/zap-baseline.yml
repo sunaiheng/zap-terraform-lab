@@ -7,14 +7,48 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   zap:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Run ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: "https://sunaiheng.github.io/zap-terraform-lab/"
           fail_action: false
+
+      - name: Prepare Pages folder
+        run: |
+          mkdir -p public/zap-report
+
+          # ZAP標準出力（ここが重要）
+          if [ -f report.html ]; then
+            cp report.html public/zap-report/index.html
+          else
+            echo "report not found" > public/zap-report/index.html
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: zap
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
