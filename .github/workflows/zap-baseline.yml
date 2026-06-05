@@ -2,19 +2,53 @@ name: ZAP Scan
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
-  issues: write
+  pages: write
+  id-token: write
   security-events: write
 
 jobs:
-  zap:
+  zap_scan:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ZAP Baseline Scan
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- ZAP Scan ---
+      - name: Run ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: "https://sunaiheng.github.io/zap-terraform-lab/"
+          report_html: zap-report.html
           fail_action: false
+
+      # --- Prepare Pages content ---
+      - name: Prepare Pages folder
+        run: |
+          mkdir -p public/zap-report
+          cp zap-report.html public/zap-report/index.html
+
+      # --- Upload Pages artifact ---
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: zap_scan
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
