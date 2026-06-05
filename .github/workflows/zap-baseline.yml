@@ -1,4 +1,4 @@
-name: OWASP ZAP Baseline Scan
+name: ZAP Scan
 
 on:
   workflow_dispatch:
@@ -11,5 +11,5 @@ jobs:
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
-          target: "https://<github-user>.github.io/zap-terraform-lab/"
+          target: "https://sunaiheng.github.io/zap-terraform-lab/"
           fail_action: false
