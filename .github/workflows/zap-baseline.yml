@@ -25,6 +25,22 @@ jobs:
           target: "https://sunaiheng.github.io/zap-terraform-lab/app/"
           fail_action: false
 
+      - name: Extract vulnerability counts
+        run: |
+          echo "Extracting ZAP results..."
+
+          HIGH=$(grep -o "High</td>" zap-artifacts -R | wc -l || true)
+          MEDIUM=$(grep -o "Medium</td>" zap-artifacts -R | wc -l || true)
+          LOW=$(grep -o "Low</td>" zap-artifacts -R | wc -l || true)
+
+          echo "HIGH=$HIGH"
+          echo "MEDIUM=$MEDIUM"
+          echo "LOW=$LOW"
+
+          echo "HIGH=$HIGH" >> $GITHUB_ENV
+          echo "MEDIUM=$MEDIUM" >> $GITHUB_ENV
+          echo "LOW=$LOW" >> $GITHUB_ENV
+
       # 🟢 artifact取得（正しい方法）
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -59,17 +75,27 @@ jobs:
           ln -sfn $DATE docs/zap-report/latest
 
       # 🟢 status.json（統一）
-      - name: Update status.json
+      - name: Update status.json (with history)
         run: |
-            mkdir -p docs/data
+          DATE=$(date -u +%F-%H%M%S)
 
-            echo "{
-              \"last_scan\": \"$(date -u +%F %T)\",
-              \"latest\": \"$DATE\",
-              \"high\": 1,
-              \"medium\": 3,
-              \"low\": 5
-            }" > docs/data/status.json
+          mkdir -p docs/data
+
+          FILE=docs/data/status.json
+
+          if [ -f "$FILE" ]; then
+            HISTORY=$(jq -r '.history // []' $FILE)
+          else
+            HISTORY="[]"
+          fi
+
+          UPDATED=$(echo $HISTORY | jq --arg d "$DATE" '[.[]] + [$d] | .[0:10]')
+
+          echo "{
+            \"last_scan\": \"$(date -u +%F %T)\",
+            \"latest\": \"$DATE\",
+            \"history\": $UPDATED
+          }" > $FILE
 
       # 🟢 Pages公開
       - name: Upload Pages artifact
