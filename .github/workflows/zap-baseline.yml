@@ -39,13 +39,17 @@ jobs:
         run: ls -R zap
 
       # -------------------------
-      # ZAP結果解析（HTMLベース）
+      # ★正確なテーブル抽出（ここが重要）
       # -------------------------
-      - name: Parse ZAP results
+      - name: Parse ZAP results (accurate)
         run: |
-          HIGH=$(grep -R "High" zap | wc -l)
-          MEDIUM=$(grep -R "Medium" zap | wc -l)
-          LOW=$(grep -R "Low" zap | wc -l)
+          HIGH=$(grep -A1 "High" zap | grep -Eo "[0-9]+" | head -n1)
+          MEDIUM=$(grep -A1 "Medium" zap | grep -Eo "[0-9]+" | head -n1)
+          LOW=$(grep -A1 "Low" zap | grep -Eo "[0-9]+" | head -n1)
+
+          HIGH=${HIGH:-0}
+          MEDIUM=${MEDIUM:-0}
+          LOW=${LOW:-0}
 
           echo "HIGH=$HIGH" >> $GITHUB_ENV
           echo "MEDIUM=$MEDIUM" >> $GITHUB_ENV
@@ -60,7 +64,7 @@ jobs:
           echo "DATE=$DATE" >> $GITHUB_ENV
 
       # -------------------------
-      # status.json（履歴付き）
+      # status.json（履歴完全版）
       # -------------------------
       - name: Update status.json
         run: |
@@ -90,11 +94,10 @@ jobs:
       - name: Save report
         run: |
           mkdir -p docs/zap-report/$DATE
-
           find zap -name "*.html" -exec cp {} docs/zap-report/$DATE/index.html \;
 
       # -------------------------
-      # latestリンク作成
+      # latestリンク
       # -------------------------
       - name: Create latest link
         run: |
