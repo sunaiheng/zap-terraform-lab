@@ -27,6 +27,8 @@ jobs:
         with:
           target: "https://sunaiheng.github.io/zap-terraform-lab/"
           fail_action: false
+          report_format: html
+          report_file: zap-report.html
 
       # -----------------------------
       # Debug: check generated files
@@ -42,19 +44,7 @@ jobs:
       - name: Prepare ZAP report for Pages
         run: |
           mkdir -p docs/zap-report
-
-          # いろんなパターンを吸収
-          if [ -f report.html ]; then
-            cp report.html docs/zap-report/index.html
-          elif [ -f ./report.html ]; then
-            cp ./report.html docs/zap-report/index.html
-          elif [ -f ./zap-baseline-report.html ]; then
-            cp ./zap-baseline-report.html docs/zap-report/index.html
-          elif [ -f ./baseline.html ]; then
-            cp ./baseline.html docs/zap-report/index.html
-          else
-            echo "<h1>ZAP report not found</h1><p>Check workflow logs</p>" > docs/zap-report/index.html
-          fi
+          cp zap-report.html docs/zap-report/index.html
 
       # -----------------------------
       # Upload Pages artifact
@@ -70,9 +60,32 @@ jobs:
 
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || '' }}
 
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+
+# ************************************
+
+# - name: Run ZAP Baseline Scan
+#   uses: zaproxy/action-baseline@v0.14.0
+#   with:
+#     target: "https://sunaiheng.github.io/zap-terraform-lab/"
+#     fail_action: false
+
+# # Artifactは必ず残す
+# - name: Upload ZAP artifact
+#   uses: actions/upload-artifact@v4
+#   with:
+#     name: zap-report
+#     path: .
+
+# # Pagesは「静的ファイルだけ」
+# - name: Prepare Pages content
+#   run: |
+#     mkdir -p docs/zap-report
+#     echo "<h1>ZAP report is in GitHub Actions Artifact</h1>" > docs/zap-report/index.html
+# ************************************
