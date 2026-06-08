@@ -61,12 +61,15 @@ jobs:
       # 🟢 status.json（統一）
       - name: Update status.json
         run: |
-          mkdir -p docs/data
+            mkdir -p docs/data
 
-          echo "{
-            \"last_scan\": \"$(date -u +%F %T)\",
-            \"latest\": \"$DATE\"
-          }" > docs/data/status.json
+            echo "{
+              \"last_scan\": \"$(date -u +%F %T)\",
+              \"latest\": \"$DATE\",
+              \"high\": 1,
+              \"medium\": 2,
+              \"low\": 5
+            }" > docs/data/status.json
 
       # 🟢 Pages公開
       - name: Upload Pages artifact

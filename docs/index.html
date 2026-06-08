@@ -2,49 +2,61 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ZAP Security Dashboard</title>
+  <title>ZAP Dashboard</title>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f5f6fa;
+      font-family: Arial;
       margin: 40px;
+      background: #f5f6fa;
     }
 
     .card {
       background: white;
-      padding: 24px;
+      padding: 20px;
       border-radius: 12px;
-      max-width: 700px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-    }
-
-    h1 {
-      margin-top: 0;
+      max-width: 800px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 
     .btn {
       display: inline-block;
       padding: 10px 14px;
-      margin: 6px 6px 6px 0;
+      margin-right: 6px;
       background: #2d6cdf;
       color: white;
       text-decoration: none;
       border-radius: 6px;
     }
 
-    .meta {
-      margin-top: 10px;
-      color: #444;
+    .grid {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
     }
+
+    .box {
+      flex: 1;
+      padding: 15px;
+      border-radius: 8px;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .high { background: #e74c3c; }
+    .medium { background: #f39c12; }
+    .low { background: #27ae60; }
 
     ul {
       padding-left: 18px;
     }
 
-    .small {
+    .badge {
+      padding: 3px 8px;
+      border-radius: 4px;
       font-size: 12px;
-      color: gray;
+      color: white;
     }
   </style>
 </head>
@@ -55,72 +67,78 @@
 
   <h1>🛡 ZAP Security Dashboard</h1>
 
-  <p class="meta">
+  <p>
     Last scan: <span id="lastScan">loading...</span>
   </p>
 
   <p>
-    <a class="btn" href="./app/">Open Target App</a>
+    <a class="btn" href="./app/">Target App</a>
     <a class="btn" href="./zap-report/latest/">Latest Report</a>
-    <a class="btn" href="https://github.com/sunaiheng/zap-terraform-lab/actions">
-      Run Workflow
-    </a>
   </p>
 
-  <h2>📊 Report History</h2>
+  <!-- 🟢 脆弱性数 -->
+  <h2>📊 Vulnerability Summary</h2>
 
+  <div class="grid">
+    <div class="box high">
+      High<br><span id="high">0</span>
+    </div>
+    <div class="box medium">
+      Medium<br><span id="medium">0</span>
+    </div>
+    <div class="box low">
+      Low<br><span id="low">0</span>
+    </div>
+  </div>
+
+  <!-- 🟢 履歴 -->
+  <h2>📜 History (latest 10)</h2>
   <ul id="history">
     <li>Loading...</li>
   </ul>
 
-  <p class="small">
-    Format: YYYY-MM-DD-HHMMSS
-  </p>
-
 </div>
 
 <script>
-/*
-  status.json:
-  {
-    "last_scan": "2026-06-08 12:34:56",
-    "latest": "2026-06-08-123456"
-  }
-*/
-
 fetch('./data/status.json')
-  .then(res => res.json())
+  .then(r => r.json())
   .then(data => {
 
-    document.getElementById('lastScan').innerText =
-      data.last_scan || 'unknown';
+    document.getElementById('lastScan').innerText = data.last_scan || '-';
 
+    document.getElementById('high').innerText = data.high ?? 0;
+    document.getElementById('medium').innerText = data.medium ?? 0;
+    document.getElementById('low').innerText = data.low ?? 0;
+
+    // 色バッジ制御（重要）
+    const highBox = document.querySelector('.high');
+    const mediumBox = document.querySelector('.medium');
+    const lowBox = document.querySelector('.low');
+
+    if (data.high > 0) highBox.style.border = "3px solid black";
+    if (data.medium > 0) mediumBox.style.opacity = "0.9";
+    if (data.low === 0) lowBox.style.opacity = "0.5";
+
+    // 履歴（簡易版：latestのみ表示→後で拡張）
     const history = document.getElementById('history');
 
-    const latest = data.latest;
-
-    if (!latest) {
-      history.innerHTML = "<li>No history found</li>";
+    if (!data.latest) {
+      history.innerHTML = "<li>No data</li>";
       return;
     }
 
-    // 最新 + サンプル表示（実務ではJSON拡張推奨）
-    let items = [latest];
+    // 今は1件 → 将来配列化可能
+    const items = [data.latest];
 
-    // 仮：最新だけ表示（後で配列化可能）
-    history.innerHTML = items.map(item => {
-      return `<li>
-        <a href="./zap-report/${item}/">
-          ${item}
-        </a>
-      </li>`;
-    }).join('');
+    history.innerHTML = items.map(i => `
+      <li>
+        <a href="./zap-report/${i}/">${i}</a>
+      </li>
+    `).join('');
 
   })
   .catch(() => {
-    document.getElementById('lastScan').innerText = 'unknown';
-    document.getElementById('history').innerHTML =
-      "<li>Error loading status.json</li>";
+    document.getElementById('lastScan').innerText = 'error';
   });
 </script>
 
