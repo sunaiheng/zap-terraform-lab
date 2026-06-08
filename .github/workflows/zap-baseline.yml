@@ -52,9 +52,9 @@ jobs:
             exit 1
           fi
 
-          HIGH=$(grep -E "High</div>" -A1 "$FILE" 2>/dev/null | tail -n1 | grep -oE "[0-9]+" || true)
-          MEDIUM=$(grep -E "Medium</div>" -A1 "$FILE" 2>/dev/null | tail -n1 | grep -oE "[0-9]+" || true)
-          LOW=$(grep -E "Low</div>" -A1 "$FILE" 2>/dev/null | tail -n1 | grep -oE "[0-9]+" || true)
+          HIGH=$(grep -n "High" "$FILE" | head -n1 | xargs -I{} sed -n '{}p' "$FILE" | grep -oE "[0-9]+" | head -n1)
+          MEDIUM=$(grep -n "Medium" "$FILE" | head -n1 | xargs -I{} sed -n '{}p' "$FILE" | grep -oE "[0-9]+" | head -n1)
+          LOW=$(grep -n "Low" "$FILE" | head -n1 | xargs -I{} sed -n '{}p' "$FILE" | grep -oE "[0-9]+" | head -n1)
 
           HIGH=${HIGH:-0}
           MEDIUM=${MEDIUM:-0}
