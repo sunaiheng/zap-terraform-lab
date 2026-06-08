@@ -24,13 +24,17 @@ jobs:
           target: "https://sunaiheng.github.io/zap-terraform-lab/app/"
           fail_action: false
           report_format: html
+          report_file: zap-report.html
+
+      - name: Debug files
+        run: ls -R
 
       - name: Prepare report
         run: |
           mkdir -p docs/zap-report
 
-          if [ -f report.html ]; then
-            cp report.html docs/zap-report/index.html
+          if [ -f zap-report.html ]; then
+            cp zap-report.html docs/zap-report/index.html
           else
             echo "<h1>No report found</h1>" > docs/zap-report/index.html
           fi
