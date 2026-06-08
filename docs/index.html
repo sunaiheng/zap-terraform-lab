@@ -81,6 +81,7 @@ fetch('./data/status.json')
 .then(d => {
 
   document.getElementById('last').innerText = d.last_scan || '-';
+
   document.getElementById('high').innerText = d.high ?? 0;
   document.getElementById('medium').innerText = d.medium ?? 0;
   document.getElementById('low').innerText = d.low ?? 0;
@@ -96,7 +97,7 @@ fetch('./data/status.json')
 })
 .catch(() => {
   document.getElementById('history').innerHTML =
-    "<li>error loading data</li>";
+    "<li>no data</li>";
 });
 </script>
 

@@ -18,48 +18,50 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -----------------------
-      # ZAP実行（JSON出力）
-      # -----------------------
+      # -------------------------
+      # ZAP実行（HTML出力）
+      # -------------------------
       - name: Run ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: "https://sunaiheng.github.io/zap-terraform-lab/app/"
           fail_action: false
-          report_format: json
-          report_file: zap.json
 
-      # -----------------------
-      # ZAP JSON解析
-      # -----------------------
+      # -------------------------
+      # artifact取得
+      # -------------------------
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: zap
+
+      - name: Debug
+        run: ls -R zap
+
+      # -------------------------
+      # ZAP結果解析（HTMLベース）
+      # -------------------------
       - name: Parse ZAP results
         run: |
-          sudo apt-get update && sudo apt-get install -y jq
-
-          if [ ! -f zap.json ]; then
-            echo "zap.json not found"
-            exit 1
-          fi
-
-          HIGH=$(jq '[.site[].alerts[] | select(.riskcode=="3")] | length' zap.json)
-          MEDIUM=$(jq '[.site[].alerts[] | select(.riskcode=="2")] | length' zap.json)
-          LOW=$(jq '[.site[].alerts[] | select(.riskcode=="1")] | length' zap.json)
+          HIGH=$(grep -R "High" zap | wc -l)
+          MEDIUM=$(grep -R "Medium" zap | wc -l)
+          LOW=$(grep -R "Low" zap | wc -l)
 
           echo "HIGH=$HIGH" >> $GITHUB_ENV
           echo "MEDIUM=$MEDIUM" >> $GITHUB_ENV
           echo "LOW=$LOW" >> $GITHUB_ENV
 
-      # -----------------------
+      # -------------------------
       # timestamp固定
-      # -----------------------
+      # -------------------------
       - name: Set timestamp
         run: |
           DATE=$(date -u +%F-%H%M%S)
           echo "DATE=$DATE" >> $GITHUB_ENV
 
-      # -----------------------
+      # -------------------------
       # status.json（履歴付き）
-      # -----------------------
+      # -------------------------
       - name: Update status.json
         run: |
           mkdir -p docs/data
@@ -82,27 +84,25 @@ jobs:
             \"history\": $UPDATED
           }" > $FILE
 
-      # -----------------------
+      # -------------------------
       # レポート保存
-      # -----------------------
-      - name: Save report history
+      # -------------------------
+      - name: Save report
         run: |
           mkdir -p docs/zap-report/$DATE
 
-          if [ -f zap.json ]; then
-            cp zap.json docs/zap-report/$DATE/
-          fi
+          find zap -name "*.html" -exec cp {} docs/zap-report/$DATE/index.html \;
 
-      # -----------------------
-      # latestリンク
-      # -----------------------
+      # -------------------------
+      # latestリンク作成
+      # -------------------------
       - name: Create latest link
         run: |
           ln -sfn $DATE docs/zap-report/latest
 
-      # -----------------------
-      # Pagesアップロード
-      # -----------------------
+      # -------------------------
+      # Pages公開
+      # -------------------------
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -113,5 +113,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         uses: actions/deploy-pages@v4
