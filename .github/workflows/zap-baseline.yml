@@ -28,7 +28,7 @@ jobs:
           target: "https://sunaiheng.github.io/zap-terraform-lab/"
           fail_action: false
           report_format: html
-          report_file: zap-report.html
+          path: .
 
       # -----------------------------
       # Debug: check generated files
@@ -44,7 +44,7 @@ jobs:
       - name: Prepare ZAP report for Pages
         run: |
           mkdir -p docs/zap-report
-          cp zap-report.html docs/zap-report/index.html
+          cp *.html docs/zap-report/index.html
 
       # -----------------------------
       # Upload Pages artifact
