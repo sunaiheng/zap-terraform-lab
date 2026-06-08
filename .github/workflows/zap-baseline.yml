@@ -67,7 +67,7 @@ jobs:
               \"last_scan\": \"$(date -u +%F %T)\",
               \"latest\": \"$DATE\",
               \"high\": 1,
-              \"medium\": 2,
+              \"medium\": 3,
               \"low\": 5
             }" > docs/data/status.json
 
