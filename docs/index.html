@@ -3,35 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <title>ZAP Security Dashboard</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 40px;
       background: #f5f6fa;
+      margin: 40px;
     }
 
     .card {
       background: white;
-      padding: 20px;
+      padding: 24px;
       border-radius: 12px;
-      max-width: 600px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 700px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-top: 0;
     }
 
     .btn {
       display: inline-block;
       padding: 10px 14px;
-      margin-top: 10px;
-      margin-right: 10px;
+      margin: 6px 6px 6px 0;
       background: #2d6cdf;
       color: white;
       text-decoration: none;
       border-radius: 6px;
     }
 
-    .status {
+    .meta {
       margin-top: 10px;
-      color: #333;
+      color: #444;
+    }
+
+    ul {
+      padding-left: 18px;
+    }
+
+    .small {
+      font-size: 12px;
+      color: gray;
     }
   </style>
 </head>
@@ -39,27 +52,75 @@
 <body>
 
 <div class="card">
+
   <h1>🛡 ZAP Security Dashboard</h1>
 
-  <p class="status">
+  <p class="meta">
     Last scan: <span id="lastScan">loading...</span>
   </p>
 
-  <a class="btn" href="./app/">Open Target App</a>
-  <a class="btn" href="./zap-report/">View ZAP Report</a>
-  <a class="btn" href="https://github.com/sunaiheng/zap-terraform-lab/actions">
-    Run Workflow
-  </a>
+  <p>
+    <a class="btn" href="./app/">Open Target App</a>
+    <a class="btn" href="./zap-report/latest/">Latest Report</a>
+    <a class="btn" href="https://github.com/sunaiheng/zap-terraform-lab/actions">
+      Run Workflow
+    </a>
+  </p>
+
+  <h2>📊 Report History</h2>
+
+  <ul id="history">
+    <li>Loading...</li>
+  </ul>
+
+  <p class="small">
+    Format: YYYY-MM-DD-HHMMSS
+  </p>
+
 </div>
 
 <script>
+/*
+  status.json:
+  {
+    "last_scan": "2026-06-08 12:34:56",
+    "latest": "2026-06-08-123456"
+  }
+*/
+
 fetch('./data/status.json')
-  .then(r => r.json())
+  .then(res => res.json())
   .then(data => {
-    document.getElementById('lastScan').innerText = data.last_scan;
+
+    document.getElementById('lastScan').innerText =
+      data.last_scan || 'unknown';
+
+    const history = document.getElementById('history');
+
+    const latest = data.latest;
+
+    if (!latest) {
+      history.innerHTML = "<li>No history found</li>";
+      return;
+    }
+
+    // 最新 + サンプル表示（実務ではJSON拡張推奨）
+    let items = [latest];
+
+    // 仮：最新だけ表示（後で配列化可能）
+    history.innerHTML = items.map(item => {
+      return `<li>
+        <a href="./zap-report/${item}/">
+          ${item}
+        </a>
+      </li>`;
+    }).join('');
+
   })
   .catch(() => {
     document.getElementById('lastScan').innerText = 'unknown';
+    document.getElementById('history').innerHTML =
+      "<li>Error loading status.json</li>";
   });
 </script>
 
