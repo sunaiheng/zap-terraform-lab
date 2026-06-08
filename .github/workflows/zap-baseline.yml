@@ -23,20 +23,27 @@ jobs:
         with:
           target: "https://sunaiheng.github.io/zap-terraform-lab/app/"
           fail_action: false
-          report_format: html
-          report_file: zap-report.html
+
+      # 🔥 重要：artifactを取得する
+      - name: Get ZAP report artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: zap-artifacts
 
       - name: Debug files
-        run: ls -R
+        run: ls -R zap-artifacts
 
       - name: Prepare report
         run: |
           mkdir -p docs/zap-report
 
-          if [ -f zap-report.html ]; then
-            cp zap-report.html docs/zap-report/index.html
-          else
+          # HTMLを探してコピー
+          FILE=$(find zap-artifacts -name "*.html" | head -n 1)
+
+          if [ -z "$FILE" ]; then
             echo "<h1>No report found</h1>" > docs/zap-report/index.html
+          else
+            cp "$FILE" docs/zap-report/index.html
           fi
 
       - name: Update status.json
