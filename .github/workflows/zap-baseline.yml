@@ -3,8 +3,7 @@ name: ZAP Baseline Scan
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   contents: read
@@ -16,39 +15,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # -----------------------------
-      # ZAP Scan
-      # -----------------------------
       - name: Run ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
-          target: "https://sunaiheng.github.io/zap-terraform-lab/"
+          target: "https://sunaiheng.github.io/zap-terraform-lab/app/"
           fail_action: false
           report_format: html
-          path: .
 
-      # -----------------------------
-      # Debug: check generated files
-      # -----------------------------
-      - name: List files (debug)
-        run: |
-          echo "=== FIND HTML FILES ==="
-          find . -name "*.html" || true
-
-      # -----------------------------
-      # Prepare Pages content
-      # -----------------------------
-      - name: Prepare ZAP report for Pages
+      - name: Prepare report
         run: |
           mkdir -p docs/zap-report
-          cp *.html docs/zap-report/index.html
 
-      # -----------------------------
-      # Upload Pages artifact
-      # -----------------------------
+          if [ -f report.html ]; then
+            cp report.html docs/zap-report/index.html
+          else
+            echo "<h1>No report found</h1>" > docs/zap-report/index.html
+          fi
+
+      - name: Update status.json
+        run: |
+          mkdir -p docs/data
+          echo "{\"last_scan\":\"$(date -u)\"}" > docs/data/status.json
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -58,34 +49,6 @@ jobs:
     needs: zap_scan
     runs-on: ubuntu-latest
 
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url || '' }}
-
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
-
-
-# ************************************
-
-# - name: Run ZAP Baseline Scan
-#   uses: zaproxy/action-baseline@v0.14.0
-#   with:
-#     target: "https://sunaiheng.github.io/zap-terraform-lab/"
-#     fail_action: false
-
-# # Artifactは必ず残す
-# - name: Upload ZAP artifact
-#   uses: actions/upload-artifact@v4
-#   with:
-#     name: zap-report
-#     path: .
-
-# # Pagesは「静的ファイルだけ」
-# - name: Prepare Pages content
-#   run: |
-#     mkdir -p docs/zap-report
-#     echo "<h1>ZAP report is in GitHub Actions Artifact</h1>" > docs/zap-report/index.html
-# ************************************

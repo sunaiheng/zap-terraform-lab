@@ -2,24 +2,66 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ZAP Lab</title>
-</head>
-<body>
-  <h1>OWASP ZAP Test Site</h1>
-
-  <input id="input" type="text">
-  <button onclick="run()">Test</button>
-
-  <div id="result"></div>
-
-  <script>
-    function run() {
-      const value = document.getElementById("input").value;
-
-      // 故意に危険な実装
-      document.getElementById("result").innerHTML = value;
+  <title>ZAP Security Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f5f6fa;
     }
-  </script>
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 600px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 14px;
+      margin-top: 10px;
+      margin-right: 10px;
+      background: #2d6cdf;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: #333;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>🛡 ZAP Security Dashboard</h1>
+
+  <p class="status">
+    Last scan: <span id="lastScan">loading...</span>
+  </p>
+
+  <a class="btn" href="./app/">Open Target App</a>
+  <a class="btn" href="./zap-report/">View ZAP Report</a>
+  <a class="btn" href="https://github.com/sunaiheng/zap-terraform-lab/actions">
+    Run Workflow
+  </a>
+</div>
+
+<script>
+fetch('./data/status.json')
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('lastScan').innerText = data.last_scan;
+  })
+  .catch(() => {
+    document.getElementById('lastScan').innerText = 'unknown';
+  });
+</script>
 
 </body>
 </html>
