@@ -1,145 +1,103 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ZAP Dashboard</title>
+<meta charset="UTF-8">
+<title>ZAP Dashboard</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      margin: 40px;
-      background: #f5f6fa;
-    }
+<style>
+body {
+  font-family: Arial;
+  margin: 40px;
+  background: #f5f6fa;
+}
 
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 800px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 800px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
 
-    .btn {
-      display: inline-block;
-      padding: 10px 14px;
-      margin-right: 6px;
-      background: #2d6cdf;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-    }
+.grid {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
 
-    .grid {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-    }
+.box {
+  flex: 1;
+  padding: 15px;
+  border-radius: 8px;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+}
 
-    .box {
-      flex: 1;
-      padding: 15px;
-      border-radius: 8px;
-      color: white;
-      text-align: center;
-      font-weight: bold;
-    }
+.high { background: #e74c3c; }
+.medium { background: #f39c12; }
+.low { background: #27ae60; }
 
-    .high { background: #e74c3c; }
-    .medium { background: #f39c12; }
-    .low { background: #27ae60; }
-
-    ul {
-      padding-left: 18px;
-    }
-
-    .badge {
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      color: white;
-    }
-  </style>
+.btn {
+  display:inline-block;
+  padding:8px 12px;
+  background:#2d6cdf;
+  color:white;
+  text-decoration:none;
+  border-radius:6px;
+}
+</style>
 </head>
 
 <body>
 
 <div class="card">
 
-  <h1>🛡 ZAP Security Dashboard</h1>
+<h1>🛡 ZAP Security Dashboard</h1>
 
-  <p>
-    Last scan: <span id="lastScan">loading...</span>
-  </p>
+<p>Last scan: <span id="last"></span></p>
 
-  <p>
-    <a class="btn" href="./app/">Target App</a>
-    <a class="btn" href="./zap-report/latest/">Latest Report</a>
-  </p>
+<p>
+<a class="btn" href="./app/">Target</a>
+<a class="btn" href="./zap-report/latest/">Latest Report</a>
+</p>
 
-  <!-- 🟢 脆弱性数 -->
-  <h2>📊 Vulnerability Summary</h2>
+<h2>📊 Vulnerability Summary</h2>
 
-  <div class="grid">
-    <div class="box high">
-      High<br><span id="high">0</span>
-    </div>
-    <div class="box medium">
-      Medium<br><span id="medium">0</span>
-    </div>
-    <div class="box low">
-      Low<br><span id="low">0</span>
-    </div>
-  </div>
+<div class="grid">
+  <div class="box high">High<br><span id="high">0</span></div>
+  <div class="box medium">Medium<br><span id="medium">0</span></div>
+  <div class="box low">Low<br><span id="low">0</span></div>
+</div>
 
-  <!-- 🟢 履歴 -->
-  <h2>📜 History (latest 10)</h2>
-  <ul id="history">
-    <li>Loading...</li>
-  </ul>
+<h2>📜 History (latest 10)</h2>
+<ul id="history"></ul>
 
 </div>
 
 <script>
 fetch('./data/status.json')
-  .then(r => r.json())
-  .then(data => {
+.then(r => r.json())
+.then(d => {
 
-    document.getElementById('lastScan').innerText = data.last_scan || '-';
+  document.getElementById('last').innerText = d.last_scan || '-';
+  document.getElementById('high').innerText = d.high ?? 0;
+  document.getElementById('medium').innerText = d.medium ?? 0;
+  document.getElementById('low').innerText = d.low ?? 0;
 
-    document.getElementById('high').innerText = data.high ?? 0;
-    document.getElementById('medium').innerText = data.medium ?? 0;
-    document.getElementById('low').innerText = data.low ?? 0;
+  const list = document.getElementById('history');
 
-    // 色バッジ制御（重要）
-    const highBox = document.querySelector('.high');
-    const mediumBox = document.querySelector('.medium');
-    const lowBox = document.querySelector('.low');
-
-    if (data.high > 0) highBox.style.border = "3px solid black";
-    if (data.medium > 0) mediumBox.style.opacity = "0.9";
-    if (data.low === 0) lowBox.style.opacity = "0.5";
-
-    // 履歴（簡易版：latestのみ表示→後で拡張）
-    const history = document.getElementById('history');
-
-    if (!data.latest) {
-      history.innerHTML = "<li>No data</li>";
-      return;
-    }
-
-    // 今は1件 → 将来配列化可能
-    const items = [data.latest];
-
-    history.innerHTML = items.map(i => `
-      <li>
-        <a href="./zap-report/${i}/">${i}</a>
-      </li>
-    `).join('');
-
-  })
-  .catch(() => {
-    document.getElementById('lastScan').innerText = 'error';
+  (d.history || []).slice(0,10).forEach(h => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="./zap-report/${h}/">${h}</a>`;
+    list.appendChild(li);
   });
+
+})
+.catch(() => {
+  document.getElementById('history').innerHTML =
+    "<li>error loading data</li>";
+});
 </script>
 
 </body>
