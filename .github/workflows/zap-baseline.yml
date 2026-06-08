@@ -43,9 +43,16 @@ jobs:
       # -------------------------
       - name: Parse ZAP results (accurate)
         run: |
-          HIGH=$(grep -E "High</td>" -A1 zap | tail -n1 | grep -oE "[0-9]+")
-          MEDIUM=$(grep -E "Medium</td>" -A1 zap | tail -n1 | grep -oE "[0-9]+")
-          LOW=$(grep -E "Low</td>" -A1 zap | tail -n1 | grep -oE "[0-9]+")
+          FILE=$(find zap -name "*.html" | head -n 1)
+
+          if [ -z "$FILE" ]; then
+            echo "No HTML found"
+            exit 1
+          fi
+          HIGH=$(grep -E "High</td>" -A1 "$FILE" | tail -n1 | grep -oE "[0-9]+")
+          MEDIUM=$(grep -E "Medium</td>" -A1 "$FILE" | tail -n1 | grep -oE "[0-9]+")
+          LOW=$(grep -E "Low</td>" -A1 "$FILE" | tail -n1 | grep -oE "[0-9]+")
+
 
           HIGH=${HIGH:-0}
           MEDIUM=${MEDIUM:-0}
