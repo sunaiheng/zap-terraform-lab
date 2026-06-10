@@ -50,7 +50,7 @@ jobs:
           MEDIUM=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("Medium")))] | length' "$FILE")
           LOW=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("Low")))] | length' "$FILE")
           INFO=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("Info")))] | length' "$FILE")
-          
+
           echo "HIGH=$HIGH" >> $GITHUB_ENV
           echo "MEDIUM=$MEDIUM" >> $GITHUB_ENV
           echo "LOW=$LOW" >> $GITHUB_ENV
@@ -120,13 +120,22 @@ jobs:
           </html>
           EOF
 
+      # - name: Commit ZAP report history
+      #   run: |
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      #     git add docs/data/status.json docs/zap-report
+      #     git diff --cached --quiet || git commit -m "Update ZAP baseline report"
+      #     git push
       - name: Commit ZAP report history
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/data/status.json docs/zap-report
-          git diff --cached --quiet || git commit -m "Update ZAP baseline report"
-          git push
+          git diff --cached --quiet && exit 0
+          git commit -m "Update ZAP baseline report"
+          git pull --rebase origin main
+          git push origin main
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
