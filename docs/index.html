@@ -163,11 +163,24 @@ fetch('./data/status.json')
     history.innerHTML = '';
 
     (data.history || []).slice(0, 10).forEach(item => {
+      const h = typeof item === 'string'
+        ? {
+            date: item,
+            high: 0,
+            medium: 0,
+            low: 0,
+            info: 0
+          }
+        : item;
 
       const li = document.createElement('li');
 
       li.innerHTML =
-        `<a href="./zap-report/${item}/">${item}</a>`;
+        `<a href="./zap-report/${h.date}/">${h.date}</a>
+        - High: ${h.high ?? 0},
+          Medium: ${h.medium ?? 0},
+          Low: ${h.low ?? 0},
+          Info: ${h.info ?? 0}`;
 
       history.appendChild(li);
     });

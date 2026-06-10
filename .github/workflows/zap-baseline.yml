@@ -73,13 +73,53 @@ jobs:
           mkdir -p docs/data
           FILE=docs/data/status.json
 
-          if [ -f "$FILE" ]; then
+          if [ -f "$FILE" ] && jq empty "$FILE" 2>/dev/null; then
             HISTORY=$(jq '.history // []' "$FILE")
           else
             HISTORY="[]"
           fi
 
-          UPDATED=$(echo "$HISTORY" | jq --arg d "$DATE" '[$d] + . | .[0:10]')
+          NORMALIZED_HISTORY=$(echo "$HISTORY" | jq '
+            map(
+              if type == "string" then
+                {
+                  date: .,
+                  high: 0,
+                  medium: 0,
+                  low: 0,
+                  info: 0
+                }
+              else
+                {
+                  date: .date,
+                  high: (.high // 0),
+                  medium: (.medium // 0),
+                  low: (.low // 0),
+                  info: (.info // 0)
+                }
+              end
+            )
+          ')
+
+          UPDATED=$(echo "$NORMALIZED_HISTORY" | jq \
+            --arg date "$DATE" \
+            --argjson high "$HIGH" \
+            --argjson medium "$MEDIUM" \
+            --argjson low "$LOW" \
+            --argjson info "$INFO" \
+            '[
+              {
+                date: $date,
+                high: $high,
+                medium: $medium,
+                low: $low,
+                info: $info
+              }
+            ] + .
+            | unique_by(.date)
+            | sort_by(.date)
+            | reverse
+            | .[0:10]')
 
           jq -n \
             --arg last_scan "$(date -u '+%F %T')" \

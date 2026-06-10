@@ -26,5 +26,13 @@ git add .github/workflows/zap-baseline.yml
 git commit -m "コメント"
 git push
 
+# ※二回目以降
+push する前に pull
+git status
+git pull --rebase origin main
+git add .
+git commit -m "コメント"
+git push
+
 # 確認
 https://sunaiheng.github.io/zap-terraform-lab/
