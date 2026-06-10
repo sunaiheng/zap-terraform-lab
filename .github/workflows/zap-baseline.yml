@@ -122,13 +122,6 @@ jobs:
           </html>
           EOF
 
-      # - name: Commit ZAP report history
-      #   run: |
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      #     git add docs/data/status.json docs/zap-report
-      #     git diff --cached --quiet || git commit -m "Update ZAP baseline report"
-      #     git push
       - name: Commit ZAP report history
         run: |
           git config user.name "github-actions[bot]"
