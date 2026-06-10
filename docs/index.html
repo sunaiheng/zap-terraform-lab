@@ -47,6 +47,9 @@ body {
 .low {
   background: #27ae60;
 }
+.info {
+  background: #3498db;
+}
 
 .btn {
   display: inline-block;
@@ -111,6 +114,11 @@ li {
       Low<br>
       <span id="low">0</span>
     </div>
+
+    <div class="box info">
+      Info<br>
+      <span id="info">0</span>
+    </div>
   </div>
 
   <h2>📜 Scan History (latest 10)</h2>
@@ -148,6 +156,9 @@ fetch('./data/status.json')
     document.getElementById('low').innerText =
       data.low ?? 0;
 
+    document.getElementById('info').innerText =
+      data.info ?? 0;
+
     const history = document.getElementById('history');
     history.innerHTML = '';
 
@@ -175,6 +186,7 @@ fetch('./data/status.json')
     document.getElementById('high').innerText = '0';
     document.getElementById('medium').innerText = '0';
     document.getElementById('low').innerText = '0';
+    document.getElementById('info').innerText = '0';
 
     document.getElementById('history').innerHTML =
       '<li>status.json がまだ生成されていません</li>';

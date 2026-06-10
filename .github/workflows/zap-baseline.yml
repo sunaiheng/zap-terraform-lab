@@ -49,14 +49,17 @@ jobs:
           HIGH=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("High")))] | length' "$FILE")
           MEDIUM=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("Medium")))] | length' "$FILE")
           LOW=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("Low")))] | length' "$FILE")
-
+          INFO=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("Info")))] | length' "$FILE")
+          
           echo "HIGH=$HIGH" >> $GITHUB_ENV
           echo "MEDIUM=$MEDIUM" >> $GITHUB_ENV
           echo "LOW=$LOW" >> $GITHUB_ENV
+          echo "INFO=$INFO" >> $GITHUB_ENV
 
           echo "HIGH=$HIGH"
           echo "MEDIUM=$MEDIUM"
           echo "LOW=$LOW"
+          echo "INFO=$INFO"
 
       - name: Set timestamp
         run: |
@@ -82,6 +85,7 @@ jobs:
             --argjson high "$HIGH" \
             --argjson medium "$MEDIUM" \
             --argjson low "$LOW" \
+            --argjson info "$INFO" \
             --argjson history "$UPDATED" \
             '{
               last_scan: $last_scan,
@@ -89,6 +93,7 @@ jobs:
               high: $high,
               medium: $medium,
               low: $low,
+              info: $info,
               history: $history
             }' > "$FILE"
 
