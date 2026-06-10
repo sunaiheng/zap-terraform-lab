@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -18,107 +18,107 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -------------------------
-      # ZAP実行（HTML出力）
-      # -------------------------
       - name: Run ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.14.0
+        uses: zaproxy/action-baseline@v0.15.0
+        continue-on-error: true
         with:
           target: "https://sunaiheng.github.io/zap-terraform-lab/app/"
           fail_action: false
+          allow_issue_writing: false
+          artifact_name: zap_scan
+          cmd_options: "-a -r report_html.html -J report_json.json"
 
-      # -------------------------
-      # artifact取得
-      # -------------------------
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
+          name: zap_scan
           path: zap
 
       - name: Debug
         run: ls -R zap
 
-      # -------------------------
-      # ★正確なテーブル抽出（ここが重要）
-      # -------------------------
-      - name: Parse ZAP results (accurate)
+      - name: Parse ZAP results from JSON
         run: |
-          FILE="./zap/zap_scan/report_html.html"
-
-          echo "Using FILE=$FILE"
+          FILE="./zap/report_json.json"
 
           if [ ! -f "$FILE" ]; then
-            echo "HTML report not found"
+            echo "JSON report not found"
             exit 1
           fi
 
-          HIGH=$(grep -n "High" "$FILE" | head -n1 | xargs -I{} sed -n '{}p' "$FILE" | grep -oE "[0-9]+" | head -n1)
-          MEDIUM=$(grep -n "Medium" "$FILE" | head -n1 | xargs -I{} sed -n '{}p' "$FILE" | grep -oE "[0-9]+" | head -n1)
-          LOW=$(grep -n "Low" "$FILE" | head -n1 | xargs -I{} sed -n '{}p' "$FILE" | grep -oE "[0-9]+" | head -n1)
-
-          HIGH=${HIGH:-0}
-          MEDIUM=${MEDIUM:-0}
-          LOW=${LOW:-0}
-
-          echo "HIGH=$HIGH"
-          echo "MEDIUM=$MEDIUM"
-          echo "LOW=$LOW"
+          HIGH=$(jq '[.. | objects | select(.riskdesc? | startswith("High"))] | length' "$FILE")
+          MEDIUM=$(jq '[.. | objects | select(.riskdesc? | startswith("Medium"))] | length' "$FILE")
+          LOW=$(jq '[.. | objects | select(.riskdesc? | startswith("Low"))] | length' "$FILE")
 
           echo "HIGH=$HIGH" >> $GITHUB_ENV
           echo "MEDIUM=$MEDIUM" >> $GITHUB_ENV
           echo "LOW=$LOW" >> $GITHUB_ENV
 
-      # -------------------------
-      # timestamp固定
-      # -------------------------
       - name: Set timestamp
         run: |
           DATE=$(date -u +%F-%H%M%S)
           echo "DATE=$DATE" >> $GITHUB_ENV
 
-      # -------------------------
-      # status.json（履歴完全版）
-      # -------------------------
       - name: Update status.json
         run: |
           mkdir -p docs/data
           FILE=docs/data/status.json
 
           if [ -f "$FILE" ]; then
-            HISTORY=$(jq '.history // []' $FILE)
+            HISTORY=$(jq '.history // []' "$FILE")
           else
             HISTORY="[]"
           fi
 
-          UPDATED=$(echo $HISTORY | jq --arg d "$DATE" '[.[]] + [$d] | .[0:10]')
+          UPDATED=$(echo "$HISTORY" | jq --arg d "$DATE" '[$d] + . | .[0:10]')
 
-          echo "{
-            \"last_scan\": \"$(date -u +%F %T)\",
-            \"latest\": \"$DATE\",
-            \"high\": $HIGH,
-            \"medium\": $MEDIUM,
-            \"low\": $LOW,
-            \"history\": $UPDATED
-          }" > $FILE
+          jq -n \
+            --arg last_scan "$(date -u '+%F %T')" \
+            --arg latest "$DATE" \
+            --argjson high "$HIGH" \
+            --argjson medium "$MEDIUM" \
+            --argjson low "$LOW" \
+            --argjson history "$UPDATED" \
+            '{
+              last_scan: $last_scan,
+              latest: $latest,
+              high: $high,
+              medium: $medium,
+              low: $low,
+              history: $history
+            }' > "$FILE"
 
-      # -------------------------
-      # レポート保存
-      # -------------------------
       - name: Save report
         run: |
           mkdir -p docs/zap-report/$DATE
-          find zap -name "*.html" -exec cp {} docs/zap-report/$DATE/index.html \;
+          cp zap/report_html.html docs/zap-report/$DATE/index.html
+          cp zap/report_json.json docs/zap-report/$DATE/report_json.json
 
-      # -------------------------
-      # latestリンク
-      # -------------------------
-      - name: Create latest link
+      - name: Create latest redirect
         run: |
-          ln -sfn $DATE docs/zap-report/latest
+          mkdir -p docs/zap-report/latest
+          cat > docs/zap-report/latest/index.html <<EOF
+          <!doctype html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta http-equiv="refresh" content="0; url=../$DATE/">
+              <title>Redirecting...</title>
+            </head>
+            <body>
+              <a href="../$DATE/">Latest ZAP Report</a>
+            </body>
+          </html>
+          EOF
 
-      # -------------------------
-      # Pages公開
-      # -------------------------
+      - name: Commit ZAP report history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/data/status.json docs/zap-report
+          git diff --cached --quiet || git commit -m "Update ZAP baseline report"
+          git push
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
