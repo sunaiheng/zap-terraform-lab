@@ -46,13 +46,17 @@ jobs:
             exit 1
           fi
 
-          HIGH=$(jq '[.. | objects | select(.riskdesc? | startswith("High"))] | length' "$FILE")
-          MEDIUM=$(jq '[.. | objects | select(.riskdesc? | startswith("Medium"))] | length' "$FILE")
-          LOW=$(jq '[.. | objects | select(.riskdesc? | startswith("Low"))] | length' "$FILE")
+          HIGH=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("High")))] | length' "$FILE")
+          MEDIUM=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("Medium")))] | length' "$FILE")
+          LOW=$(jq '[.. | objects | select((.riskdesc? | type == "string") and (.riskdesc | startswith("Low")))] | length' "$FILE")
 
           echo "HIGH=$HIGH" >> $GITHUB_ENV
           echo "MEDIUM=$MEDIUM" >> $GITHUB_ENV
           echo "LOW=$LOW" >> $GITHUB_ENV
+
+          echo "HIGH=$HIGH"
+          echo "MEDIUM=$MEDIUM"
+          echo "LOW=$LOW"
 
       - name: Set timestamp
         run: |
