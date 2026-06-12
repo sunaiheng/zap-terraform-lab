@@ -144,6 +144,15 @@ jobs:
           mkdir -p docs/zap-report/$DATE
           cp zap/report_html.html docs/zap-report/$DATE/index.html
           cp zap/report_json.json docs/zap-report/$DATE/report_json.json
+      
+      - name: Convert ZAP report to SARIF
+        run: |
+          python scripts/zap_to_sarif.py zap/report_json.json zap.sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: zap.sarif
 
       - name: Create latest redirect
         run: |

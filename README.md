@@ -1,15 +1,24 @@
 # 構成
 zap-terraform-lab
-├── .github
-│   └── workflows
-│       └── zap-baseline.yml
-├── docs
-│   ├── index.html
-│   └── zap-report\
-│       ├── index.html(自動生成)
+├── .github/workflows/
+│   └── zap-baseline.yml
+│
+├── scripts/
+│   └── zap_to_sarif.py        ★SARIF変換してCode Scanningに流し、ダッシュボード表示ため
+│
+├── docs/
+│   ├── index.html              ★ダッシュボード入口
+│   ├── zap-report/
+│   │    └── YYYY-MM-DD-HHMMSS/
+│   │         ├── index.html
+│   │         └── report_json.json
+│   ├── data/
+│   │    └── status.json      
+│   └── dashboard/
+│        └── index.html        ★NEW（統合UI）
+│
+└── zap.sarif                  ★生成物
 │   └── app\
-│   └── data\
-│        └── status.json(自動生成)
 ├── .gitignore
 └── README.md
 
