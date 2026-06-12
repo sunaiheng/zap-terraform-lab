@@ -26,11 +26,8 @@ for site in data.get("site", []):
         for inst in alert.get("instances", []):
             url = inst.get("uri", "")
 
-            # ❗ 重要修正：httpsをSARIFに入れない
-            if url.startswith("http"):
-                uri = ""   # or "app/index.html"
-            else:
-                uri = url
+            # ★必ずrepo内パスにする（超重要）
+            uri = "docs/zap-report/latest/index.html"
 
             results.append({
                 "ruleId": rule_id,
