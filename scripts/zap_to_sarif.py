@@ -13,6 +13,9 @@ rules = {}
 for site in data.get("site", []):
     for alert in site.get("alerts", []):
         rule_id = alert["alert"].replace(" ", "_")
+        risk = alert.get("riskdesc", "")
+        if "Info" in risk:
+            continue
 
         rules[rule_id] = {
             "id": rule_id,
