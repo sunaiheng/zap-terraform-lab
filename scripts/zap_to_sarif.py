@@ -24,13 +24,23 @@ for site in data.get("site", []):
         }
 
         for inst in alert.get("instances", []):
+            url = inst.get("uri", "")
+
+            # ❗ 重要修正：httpsをSARIFに入れない
+            if url.startswith("http"):
+                uri = ""   # or "app/index.html"
+            else:
+                uri = url
+
             results.append({
                 "ruleId": rule_id,
-                "message": {"text": alert["alert"]},
+                "message": {
+                    "text": f"{alert['alert']} - {url}"
+                },
                 "locations": [{
                     "physicalLocation": {
                         "artifactLocation": {
-                            "uri": inst.get("uri", "")
+                            "uri": uri
                         }
                     }
                 }]
